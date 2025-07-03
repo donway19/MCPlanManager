@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "plan-manager": {
+      "command": "python",
+      "args": ["mcp_wrapper.py"],
+      "cwd": "/workspace/PlanManager",
+      "description": "PlanManager AI Agent任务管理工具 - 魔搭平台版本",
+      "env": {
+        "PYTHONPATH": "/workspace/PlanManager",
+        "PLAN_MANAGER_DATA_DIR": "/workspace/data"
+      },
+      "install": {
+        "type": "git",
+        "url": "https://github.com/YOUR_USERNAME/PlanManager.git",
+        "requirements": "requirements.txt"
+      }
+    }
+  }
+}

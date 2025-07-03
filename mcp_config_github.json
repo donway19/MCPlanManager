@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "plan-manager": {
+      "command": "python",
+      "args": ["mcp_wrapper.py"],
+      "cwd": "~/PlanManager",
+      "description": "PlanManager AI Agent任务管理工具 - GitHub版本",
+      "env": {
+        "PYTHONPATH": "~/PlanManager"
+      }
+    }
+  }
+}
