@@ -3,7 +3,9 @@
     "mcplanmanager": {
       "command": "python",
       "args": ["-m", "mcplanmanager.mcp_server"],
-      "env": {}
+      "env": {
+        "PLAN_MANAGER_DATA_DIR": "./data"
+      }
     }
   }
 } 

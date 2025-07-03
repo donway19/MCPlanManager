@@ -2,12 +2,12 @@
   "mcpServers": {
     "mcplanmanager": {
       "command": "python",
-      "args": ["-m", "mcplanmanager.mcp_server"],
-      "cwd": "/workspace/PlanManager",
+      "args": ["start.py"],
+      "cwd": ".",
       "description": "PlanManager AI Agent任务管理工具 - 魔搭平台版本",
       "env": {
-        "PYTHONPATH": "/workspace/PlanManager",
-        "PLAN_MANAGER_DATA_DIR": "/workspace/data"
+        "PYTHONPATH": ".",
+        "PLAN_MANAGER_DATA_DIR": "./data"
       },
       "install": {
         "type": "git",
