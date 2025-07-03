@@ -1,0 +1,9 @@
+{
+  "mcpServers": {
+    "mcplanmanager": {
+      "command": "python",
+      "args": ["-m", "mcplanmanager.mcp_wrapper"],
+      "env": {}
+    }
+  }
+} 

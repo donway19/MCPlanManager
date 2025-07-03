@@ -1,6 +1,6 @@
-# PlanManager - AI Agent 任务管理系统
+# MCPlanManager - AI Agent 任务管理系统
 
-一个简洁高效的任务管理器，专为 AI Agent 的长程任务执行而设计。
+一个简洁高效的任务管理器，专为 AI Agent 的长程任务执行而设计，支持MCP (Model Context Protocol) 标准。
 
 ## 🎯 核心特性
 
@@ -9,16 +9,191 @@
 - **循环依赖检测**: 自动防止无效的依赖关系
 - **可视化支持**: 提供多种依赖关系可视化方式
 - **智能Prompt生成**: 自动生成上下文感知的执行指导
+- **MCP标准支持**: 兼容各种支持MCP的AI客户端
 
-## 📁 文件结构
+## 📁 项目结构
 
 ```
-PlanManager/
-├── plan_manager.py          # 核心PlanManager类
-├── dependency_tools.py      # 可视化和Prompt工具
-├── example_usage.py         # 使用示例
-├── plan_manager_design.md   # 详细设计文档
+MCPlanManager/
+├── mcplanmanager/           # 核心Python包
+│   ├── __init__.py
+│   ├── plan_manager.py      # 核心PlanManager类
+│   ├── dependency_tools.py  # 可视化和Prompt工具
+│   └── mcp_wrapper.py       # MCP服务包装器
+├── docs/                    # 文档
+│   ├── design.md
+│   ├── plan_manager_design.md
+│   └── DEPLOYMENT_GUIDE.md
+├── tests/                   # 测试文件
+│   ├── test_deployment.py
+│   └── example_usage.py
+├── examples/                # 示例文件
+│   ├── example_plan.json
+│   └── mcp_configs/         # MCP客户端配置
+│       ├── cursor.json      # Cursor IDE配置
+│       ├── claude_desktop.json  # Claude Desktop配置
+│       ├── github.json      # GitHub配置
+│       └── modelscope.json  # 魔搭平台配置
+├── server/                  # HTTP服务器
+│   └── api_server.py
+├── setup.py
+├── requirements.txt
+├── LICENSE
 └── README.md               # 本文档
+```
+
+## 🚀 安装方法
+
+### 方法一：通过pip安装 (推荐)
+```bash
+pip install mcplanmanager
+```
+
+### 方法二：从源码安装
+```bash
+git clone https://github.com/donway19/MCPlanManager.git
+cd MCPlanManager
+pip install -e .
+```
+
+## 🔧 MCP客户端配置
+
+### Cursor IDE
+
+1. **安装依赖**:
+```bash
+# 使用uv包管理器（推荐）
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv venv ~/.mcpenv
+uv pip install --directory ~/.mcpenv mcplanmanager
+```
+
+2. **配置Cursor**:
+   - 打开Cursor设置 → Extensions → MCP
+   - 添加以下配置到 `mcp_servers.json`:
+
+```json
+{
+  "mcpServers": {
+    "mcplanmanager": {
+      "command": "uv",
+      "args": ["--directory", "~/.mcpenv", "run", "mcplanmanager"],
+      "env": {
+        "UV_PROJECT_ENVIRONMENT": "~/.mcpenv"
+      }
+    }
+  }
+}
+```
+
+3. **验证安装**: 重启Cursor，在Chat中应该能看到MCPlanManager工具可用。
+
+### Claude Desktop
+
+1. **安装依赖**:
+```bash
+pip install mcplanmanager
+```
+
+2. **配置Claude Desktop**:
+   - 找到Claude Desktop配置文件:
+     - **macOS**: `~/Library/Application Support/Claude/claude_desktop_config.json`
+     - **Windows**: `%APPDATA%\Claude\claude_desktop_config.json`
+     - **Linux**: `~/.config/claude/claude_desktop_config.json`
+
+   - 添加以下配置:
+
+```json
+{
+  "mcpServers": {
+    "mcplanmanager": {
+      "command": "python",
+      "args": ["-m", "mcplanmanager.mcp_wrapper"],
+      "env": {}
+    }
+  }
+}
+```
+
+3. **重启Claude Desktop**使配置生效。
+
+### Continue.dev
+
+1. **安装依赖**:
+```bash
+pip install mcplanmanager
+```
+
+2. **配置Continue**:
+   - 编辑 `~/.continue/config.json`
+   - 添加MCP服务器配置:
+
+```json
+{
+  "mcpServers": [
+    {
+      "name": "mcplanmanager",
+      "command": "python",
+      "args": ["-m", "mcplanmanager.mcp_wrapper"]
+    }
+  ]
+}
+```
+
+### 自定义MCP客户端
+
+对于其他支持MCP的客户端，使用以下通用配置模板：
+
+```json
+{
+  "name": "mcplanmanager",
+  "command": "python",
+  "args": ["-m", "mcplanmanager.mcp_wrapper"],
+  "env": {},
+  "capabilities": {
+    "tools": true,
+    "resources": false,
+    "prompts": false
+  }
+}
+```
+
+## 🔍 可用的MCP工具
+
+安装配置成功后，您可以使用以下工具：
+
+- `initializePlan` - 初始化新的任务计划
+- `getCurrentTask` - 获取当前应执行的任务
+- `startNextTask` - 开始下一个任务
+- `completeTask` - 完成任务
+- `failTask` - 标记任务失败
+- `addTask` - 添加新任务
+- `updateTask` - 更新任务信息
+- `skipTask` - 跳过任务
+- `getPlanStatus` - 获取计划状态
+- `getTaskList` - 获取任务列表
+- `visualizePlan` - 可视化依赖关系
+- `generatePrompt` - 生成上下文提示词
+
+## 💡 使用示例 (MCP模式)
+
+在支持MCP的客户端中，可以直接使用自然语言调用工具：
+
+```
+用户: 帮我创建一个网站自动化任务计划
+AI: 我来为您创建一个网站自动化任务计划...
+
+[使用initializePlan工具]
+
+用户: 开始执行第一个任务
+AI: 开始执行任务...
+
+[使用startNextTask工具]
+
+用户: 任务1完成了，结果是成功打开了网站
+AI: 标记任务1为完成状态...
+
+[使用completeTask工具]
 ```
 
 ## 🚀 快速开始

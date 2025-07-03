@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-PlanManager安装脚本
+MCPlanManager安装脚本
 """
 
 from setuptools import setup, find_packages
@@ -12,7 +12,7 @@ with open("requirements.txt", "r", encoding="utf-8") as fh:
     requirements = [line.strip() for line in fh if line.strip() and not line.startswith("#")]
 
 setup(
-    name="plan-manager-mcp",
+    name="mcplanmanager",
     version="1.0.0",
     author="Suhe",
     author_email="donwaydoom@gmail.com",
@@ -21,12 +21,6 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/donway19/MCPlanManager",
     packages=find_packages(),
-    py_modules=[
-        "plan_manager",
-        "dependency_tools", 
-        "mcp_wrapper",
-        "api_server"
-    ],
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
@@ -48,12 +42,13 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "plan-manager=mcp_wrapper:main",
-            "plan-manager-api=api_server:main",
+            "mcplanmanager=mcplanmanager.mcp_wrapper:main",
+            "mcplanmanager-api=server.api_server:main",
         ],
     },
     include_package_data=True,
     package_data={
         "": ["*.json", "*.md"],
+        "mcplanmanager": ["*.md"],
     },
 )
