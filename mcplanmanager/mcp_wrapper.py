@@ -2,36 +2,52 @@
 """
 PlanManager工具包装器
 为不同环境提供统一的工具接口
+使用纯内存模式，适用于托管环境
 """
 
 import json
 import sys
-from typing import Dict, Any
+from typing import Dict, Any, Optional
 from .plan_manager import PlanManager
 from .dependency_tools import DependencyVisualizer, DependencyPromptGenerator
 
 class PlanManagerWrapper:
-    """PlanManager工具包装器"""
+    """PlanManager工具包装器（纯内存模式）"""
     
-    def __init__(self, plan_file: str = "plan.json"):
-        self.plan_file = plan_file
+    def __init__(self):
+        """初始化包装器"""
         self.plan_manager = None
     
     def get_plan_manager(self) -> PlanManager:
         """获取PlanManager实例"""
         if self.plan_manager is None:
-            self.plan_manager = PlanManager(self.plan_file)
+            self.plan_manager = PlanManager()
         return self.plan_manager
+    
+    def reset_plan_manager(self):
+        """重置计划管理器"""
+        self.plan_manager = None
     
     def execute_tool(self, tool_name: str, arguments: Dict[str, Any]) -> Dict[str, Any]:
         """执行工具调用"""
         try:
-            # 更新plan_file如果提供了
-            if 'plan_file' in arguments:
-                self.plan_file = arguments['plan_file']
-                self.plan_manager = None
+            # 处理initializePlan工具 - 重置计划管理器
+            if tool_name == "initializePlan":
+                self.reset_plan_manager()  # 重置以创建新计划
+                pm = self.get_plan_manager()
+                return pm.initializePlan(arguments["goal"], arguments["tasks"])
             
             pm = self.get_plan_manager()
+            
+            # 检查是否已有计划初始化（除了getPlanStatus工具）
+            if not pm.plan_data.get("tasks") and tool_name != "getPlanStatus":
+                return {
+                    "success": False, 
+                    "error": {
+                        "code": "PLAN_NOT_INITIALIZED", 
+                        "message": "计划未初始化。请先使用initializePlan工具创建计划。"
+                    }
+                }
             
             if tool_name == "getCurrentTask":
                 return pm.getCurrentTask()
@@ -51,8 +67,6 @@ class PlanManagerWrapper:
                 return pm.getPlanStatus()
             elif tool_name == "getExecutableTaskList":
                 return pm.getExecutableTaskList()
-            elif tool_name == "initializePlan":
-                return pm.initializePlan(arguments["goal"], arguments["tasks"])
             elif tool_name == "visualizeDependencies":
                 format_type = arguments.get("format", "ascii")
                 visualizer = DependencyVisualizer(pm)
@@ -60,6 +74,8 @@ class PlanManagerWrapper:
                     visualization = visualizer.generate_ascii_graph()
                 elif format_type == "tree":
                     visualization = visualizer.generate_tree_view()
+                elif format_type == "mermaid":
+                    visualization = visualizer.generate_mermaid_graph()
                 else:
                     visualization = visualizer.generate_ascii_graph()
                 return {"success": True, "data": {"visualization": visualization}}

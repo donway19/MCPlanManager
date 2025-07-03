@@ -2,28 +2,33 @@
 """
 MCPlanManager的标准MCP服务器实现
 符合Model Context Protocol标准，通过stdin/stdout通信
+使用纯内存模式，适用于托管环境
 """
 
 import json
 import sys
-import os
 import asyncio
 from typing import Dict, List, Any, Optional
 from .plan_manager import PlanManager
 from .dependency_tools import DependencyVisualizer, DependencyPromptGenerator
 
 class MCPlanManagerServer:
-    """MCPlanManager MCP服务器"""
+    """MCPlanManager MCP服务器（纯内存模式）"""
     
     def __init__(self):
+        """初始化MCP服务器"""
         self.plan_manager = None
-        self.plan_file = "plan.json"
     
     def get_plan_manager(self) -> PlanManager:
         """获取PlanManager实例"""
         if self.plan_manager is None:
-            self.plan_manager = PlanManager(self.plan_file)
+            # 创建纯内存模式的PlanManager
+            self.plan_manager = PlanManager()
         return self.plan_manager
+    
+    def reset_plan_manager(self):
+        """重置计划管理器（用于初始化新计划）"""
+        self.plan_manager = None
     
     async def handle_initialize(self, params: Dict) -> Dict:
         """处理初始化请求"""
@@ -234,41 +239,27 @@ class MCPlanManagerServer:
         return {"tools": tools}
     
     async def handle_call_tool(self, params: Dict) -> Dict:
-        """处理工具调用"""
+        """处理工具调用（纯内存模式）"""
         tool_name = params.get("name")
         arguments = params.get("arguments", {})
         
         try:
-            # 更新plan_file如果提供了
-            if 'plan_file' in arguments:
-                self.plan_file = arguments['plan_file']
-                self.plan_manager = None
-            
-            # 处理initializePlan工具
+            # 处理initializePlan工具 - 重置计划管理器
             if tool_name == "initializePlan":
+                self.reset_plan_manager()  # 重置以创建新计划
                 pm = self.get_plan_manager()
                 result = pm.initializePlan(arguments["goal"], arguments["tasks"])
             else:
-                # 对于其他工具，检查是否有有效的计划文件
-                if not os.path.exists(self.plan_file):
-                    return {
-                        "content": [
-                            {
-                                "type": "text",
-                                "text": "错误: 计划文件不存在。请先使用initializePlan工具创建计划。"
-                            }
-                        ],
-                        "isError": True
-                    }
+                # 对于其他工具，获取计划管理器
+                pm = self.get_plan_manager()
                 
-                try:
-                    pm = self.get_plan_manager()
-                except Exception as e:
+                # 检查是否有有效的计划（除了getPlanStatus工具）
+                if not pm.plan_data.get("tasks") and tool_name != "getPlanStatus":
                     return {
                         "content": [
                             {
                                 "type": "text",
-                                "text": f"错误: 无法加载计划文件。请先使用initializePlan工具创建计划。详细错误: {str(e)}"
+                                "text": "错误: 计划未初始化。请先使用initializePlan工具创建计划。"
                             }
                         ],
                         "isError": True

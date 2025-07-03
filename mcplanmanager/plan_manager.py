@@ -1,5 +1,4 @@
 import json
-import os
 from datetime import datetime
 from typing import Dict, List, Optional, Any, Union
 from copy import deepcopy
@@ -9,28 +8,22 @@ class PlanManager:
     """
     PlanManager - 简洁高效的任务管理器
     专为 AI Agent 的长程任务执行而设计
+    
+    使用纯内存模式，适用于托管环境和无文件系统权限的场景
     """
     
-    def __init__(self, plan_file: str = "plan.json"):
+    def __init__(self, initial_plan_data: Optional[Dict] = None):
         """
-        初始化PlanManager
+        初始化PlanManager（纯内存模式）
         
         Args:
-            plan_file: 计划文件路径
+            initial_plan_data: 初始计划数据（可选）
         """
-        self.plan_file = plan_file
-        self.plan_data = self._load_or_create_plan()
+        # 使用提供的数据或创建默认数据
+        self.plan_data = initial_plan_data if initial_plan_data else self._create_empty_plan()
     
-    def _load_or_create_plan(self) -> Dict:
-        """加载或创建计划文件"""
-        if os.path.exists(self.plan_file):
-            try:
-                with open(self.plan_file, 'r', encoding='utf-8') as f:
-                    return json.load(f)
-            except Exception:
-                pass
-        
-        # 创建默认计划结构
+    def _create_empty_plan(self) -> Dict:
+        """创建空的计划数据结构"""
         return {
             "meta": {
                 "goal": "",
@@ -44,11 +37,9 @@ class PlanManager:
             "tasks": []
         }
     
-    def _save_plan(self) -> None:
-        """保存计划到文件"""
+    def _update_timestamp(self) -> None:
+        """更新时间戳"""
         self.plan_data["meta"]["updated_at"] = datetime.now().isoformat()
-        with open(self.plan_file, 'w', encoding='utf-8') as f:
-            json.dump(self.plan_data, f, ensure_ascii=False, indent=2)
     
     def _get_next_task_id(self) -> int:
         """获取下一个任务ID"""
@@ -151,7 +142,7 @@ class PlanManager:
         self.plan_data["state"]["current_task_id"] = next_task["id"]
         self.plan_data["state"]["status"] = "running"
         
-        self._save_plan()
+        self._update_timestamp()
         
         return self._success_response({
             "task": next_task,
@@ -182,7 +173,7 @@ class PlanManager:
             if all_completed:
                 self.plan_data["state"]["status"] = "completed"
         
-        self._save_plan()
+        self._update_timestamp()
         
         return self._success_response({
             "task_id": task_id,
@@ -202,7 +193,7 @@ class PlanManager:
         if self.plan_data["state"]["current_task_id"] == task_id:
             self.plan_data["state"]["current_task_id"] = None
         
-        self._save_plan()
+        self._update_timestamp()
         
         return self._success_response({
             "task_id": task_id,
@@ -259,7 +250,7 @@ class PlanManager:
                     ]
                     task["dependencies"].append(after_task_id)
         
-        self._save_plan()
+        self._update_timestamp()
         
         return self._success_response({
             "new_task": new_task,
@@ -294,7 +285,7 @@ class PlanManager:
                 
                 task["dependencies"] = value
         
-        self._save_plan()
+        self._update_timestamp()
         
         return self._success_response({
             "updated_task": task,
@@ -314,7 +305,7 @@ class PlanManager:
         if self.plan_data["state"]["current_task_id"] == task_id:
             self.plan_data["state"]["current_task_id"] = None
         
-        self._save_plan()
+        self._update_timestamp()
         
         return self._success_response({
             "task_id": task_id,
@@ -344,7 +335,7 @@ class PlanManager:
         # 移除任务
         self.plan_data["tasks"] = [t for t in self.plan_data["tasks"] if t["id"] != task_id]
         
-        self._save_plan()
+        self._update_timestamp()
         
         return self._success_response({
             "task_id": task_id,
@@ -369,24 +360,46 @@ class PlanManager:
         })
     
     def getPlanStatus(self) -> Dict:
-        """获取整个计划的状态"""
+        """获取完整的计划状态和数据"""
         tasks = self.plan_data["tasks"]
         total_tasks = len(tasks)
         
+        # 统计任务状态
         status_counts = {}
         for task in tasks:
             status = task["status"]
             status_counts[status] = status_counts.get(status, 0) + 1
         
+        # 计算进度
+        completed_count = status_counts.get("completed", 0) + status_counts.get("skipped", 0)
+        progress = completed_count / total_tasks if total_tasks > 0 else 0.0
+        
+        # 返回完整的计划信息
         return self._success_response({
+            # 基本信息
+            "goal": self.plan_data["meta"]["goal"],
+            "created_at": self.plan_data["meta"]["created_at"],
+            "updated_at": self.plan_data["meta"]["updated_at"],
+            
+            # 状态信息
             "status": self.plan_data["state"]["status"],
             "current_task_id": self.plan_data["state"]["current_task_id"],
+            
+            # 统计信息
             "total_tasks": total_tasks,
             "completed_tasks": status_counts.get("completed", 0),
             "failed_tasks": status_counts.get("failed", 0),
             "pending_tasks": status_counts.get("pending", 0),
             "in_progress_tasks": status_counts.get("in_progress", 0),
-            "skipped_tasks": status_counts.get("skipped", 0)
+            "skipped_tasks": status_counts.get("skipped", 0),
+            
+            # 进度信息
+            "progress": progress,
+            "is_completed": self.plan_data["state"]["status"] == "completed",
+            "has_failures": status_counts.get("failed", 0) > 0,
+            
+            # 完整的计划数据（供高级用户使用）
+            "plan_data": deepcopy(self.plan_data)
         })
     
     def getTaskById(self, task_id: int) -> Dict:
@@ -415,7 +428,7 @@ class PlanManager:
     def pausePlan(self) -> Dict:
         """暂停整个计划"""
         self.plan_data["state"]["status"] = "paused"
-        self._save_plan()
+        self._update_timestamp()
         
         return self._success_response({
             "message": "Plan paused successfully"
@@ -425,7 +438,7 @@ class PlanManager:
         """恢复计划执行"""
         if self.plan_data["state"]["status"] == "paused":
             self.plan_data["state"]["status"] = "running"
-            self._save_plan()
+            self._update_timestamp()
             
             return self._success_response({
                 "message": "Plan resumed successfully"
@@ -446,7 +459,7 @@ class PlanManager:
         self.plan_data["state"]["current_task_id"] = None
         self.plan_data["state"]["status"] = "idle"
         
-        self._save_plan()
+        self._update_timestamp()
         
         return self._success_response({
             "message": "Plan reset successfully",
@@ -553,7 +566,7 @@ class PlanManager:
                                           f"Circular dependency detected involving task '{task['name']}'")
         
         self.plan_data["tasks"] = processed_tasks
-        self._save_plan()
+        self._update_timestamp()
         
         return self._success_response({
             "message": "Plan initialized successfully",
