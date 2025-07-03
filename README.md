@@ -48,20 +48,18 @@ MCPlanManager/
 
 ## 🚀 安装方法
 
-### 从GitHub安装
+### 推荐方式：源码安装
 ```bash
-# 方法一：直接从GitHub安装
-pip install git+https://github.com/donway19/MCPlanManager.git
-
-# 方法二：克隆仓库后安装
+# 克隆仓库
 git clone https://github.com/donway19/MCPlanManager.git
 cd MCPlanManager
-pip install -e .
+# 使用pip基于pyproject.toml安装
+pip install .
 ```
 
-### 从PyPI安装（即将支持）
+### 直接从GitHub安装
 ```bash
-pip install mcplanmanager
+pip install git+https://github.com/donway19/MCPlanManager.git
 ```
 
 ## 🔧 MCP客户端配置
@@ -373,8 +371,8 @@ MIT License - 详见 [LICENSE](LICENSE) 文件
 
 ## 📞 联系和支持
 
-- **作者**: Suhe
-- **邮箱**: donwaydoom@gmail.com
+- **作者**: Donwaydoom
+- **邮箱**: Donwaydoom@gmail.com
 - **GitHub**: [https://github.com/donway19/MCPlanManager](https://github.com/donway19/MCPlanManager)
 - **Issues**: [https://github.com/donway19/MCPlanManager/issues](https://github.com/donway19/MCPlanManager/issues)
 

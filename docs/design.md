@@ -14,7 +14,7 @@
 
 ```json
 {
-  "overallGoal": "在京东网站上搜索‘机械键盘’，并将价格低于500元的第一款产品加入购物车。",
+  "overallGoal": "在京东网站上搜索'机械键盘'，并将价格低于500元的第一款产品加入购物车。",
   "currentTaskID": 1,
   "tasks": [
     {
@@ -64,7 +64,7 @@
 #### 结构字段说明：
 
 *   `overallGoal`: (string) 用户最终的、最高级别的目标。这为 Agent 提供了最终的上下文，在调整计划时至关重要。
-*   `currentTaskID`: (integer) 指向当前正在执行的任务的 `id`。这是 Agent 的“光标”。
+*   `currentTaskID`: (integer) 指向当前正在执行的任务的 `id`。这是 Agent 的"光标"。
 *   `tasks`: (array) 任务对象列表。
     *   `id`: (integer) 任务的唯一标识符。
     *   `name`: (string) 对任务的简短描述，Agent 以此来理解要做什么。
@@ -76,7 +76,7 @@
         *   `skipped`: 被跳过。
     *   `dependencies`: (array of integers) 依赖的任务 `id` 列表。一个任务只有在它所有依赖的任务状态都为 `completed` 时才能开始。
     *   `reasoning`: (string) 为什么需要这个任务？这为 Agent 提供了制定和修改计划的逻辑依据。
-    *   `result`: (string, optional) 任务完成后的输出或简短总结，例如“成功登录”或“页面未找到”。
+    *   `result`: (string, optional) 任务完成后的输出或简短总结，例如"成功登录"或"页面未找到"。
 
 ---
 
@@ -170,7 +170,7 @@
     *   导航成功。
     *   **Agent思考**: "任务#1已完成。我需要调用工具来更新计划。"
     *   **Agent行动 (调用工具)**: `planManager.completeCurrentTask(result_message="Successfully navigated to JD.com")`
-    *   *后台*: `plan.json` 中任务1的状态变为 `completed`。`currentTaskID` 变为 `null`。
+    *   *后台*: 内存中的任务对象状态变为 `completed`，`currentTaskID` 变为 `null`。
 
 3.  **获取下一步**:
     *   **Agent思考**: "我已完成上一个任务，现在需要知道下一步做什么。"
@@ -179,7 +179,7 @@
     *   *返回值*: `{ "id": 2, "name": "Input 'mechanical keyboard' into search bar", ... }`
 
 4.  **处理意外情况（计划修订）**:
-    *   Agent 执行任务2，输入了“机械键盘”。正准备执行任务3（点击搜索）时，网站弹出了一个“新人红包”弹窗，覆盖了搜索按钮。
+    *   Agent 执行任务2，输入了"机械键盘"。正准备执行任务3（点击搜索）时，网站弹出了一个"新人红包"弹窗，覆盖了搜索按钮。
     *   **Agent观察**: "我无法点击搜索按钮，因为有一个ID为 'new-user-coupon-popup' 的弹窗挡住了它。原始计划没有这一步。"
     *   **Agent思考**: "我必须先关闭这个弹窗，才能继续。我需要在计划中任务2和任务3之间，插入一个新任务。"
     *   **Agent行动 (调用工具)**:
@@ -195,7 +195,7 @@
         *   一个新的任务（比如 `id: 6`）被创建。
         *   它被插入到任务2之后。
         *   原任务3的依赖从 `[2]` 自动更新为 `[6]`。
-        *   `plan.json` 现在看起来像这样（简化版）：
+        *   内存中的计划数据结构现在看起来像这样（简化版）：
             ```
             ...
             { "id": 2, "name": "Input...", "status": "completed", ... },
@@ -209,3 +209,5 @@
     *   **Agent行动 (调用工具)**: `planManager.startNextTask()`
     *   *后台*: `planManager` 找到并启动了新添加的任务#6。
     *   Agent 现在会去执行关闭弹窗的操作，整个任务流程因此变得更加鲁棒和智能。
+
+PlanManager 工具已通过简单测试，核心功能可用。
