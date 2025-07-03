@@ -177,22 +177,68 @@ pip install mcplanmanager
 
 ## 💡 使用示例 (MCP模式)
 
-在支持MCP的客户端中，可以直接使用自然语言调用工具：
+### AI模型友好的初始化方式
+
+MCPlanManager专为AI模型设计，模型只需要提供业务内容，技术字段由工具自动维护：
+
+**AI模型只需要提供：**
+- `goal`: 计划目标
+- `tasks`: 任务列表，每个任务包含：
+  - `name`: 任务名称  
+  - `reasoning`: 执行理由
+  - `dependencies`: 依赖的任务（任务名称列表或索引列表）
+
+**工具自动维护：**
+- `id`: 从1开始自动分配
+- `status`: 初始为"pending"
+- `result`: 初始为None
+- `created_at/updated_at`: 自动设置时间戳
+
+### MCP客户端中的对话示例
 
 ```
-用户: 帮我创建一个网站自动化任务计划
-AI: 我来为您创建一个网站自动化任务计划...
+用户: 帮我创建一个网上购物的任务计划
 
-[使用initializePlan工具]
+AI: 我来为您创建一个网上购物任务计划。
+
+[调用initializePlan工具]
+参数:
+{
+  "goal": "完成网上购物流程",
+  "tasks": [
+    {
+      "name": "打开购物网站",
+      "reasoning": "开始购物流程的第一步",
+      "dependencies": []
+    },
+    {
+      "name": "搜索商品", 
+      "reasoning": "查找需要购买的商品",
+      "dependencies": ["打开购物网站"]
+    },
+    {
+      "name": "加入购物车",
+      "reasoning": "将选中商品加入购物车",
+      "dependencies": ["搜索商品"]
+    },
+    {
+      "name": "完成支付",
+      "reasoning": "执行支付操作",
+      "dependencies": ["加入购物车"]
+    }
+  ]
+}
+
+✅ 计划创建成功！已自动分配任务ID和设置初始状态。
 
 用户: 开始执行第一个任务
-AI: 开始执行任务...
 
+AI: 开始执行任务...
 [使用startNextTask工具]
 
-用户: 任务1完成了，结果是成功打开了网站
-AI: 标记任务1为完成状态...
+用户: 任务1完成了，成功打开了购物网站
 
+AI: 标记任务1为完成状态...
 [使用completeTask工具]
 ```
 
@@ -273,9 +319,34 @@ prompt = generate_context_prompt("my_plan.json")
 print(prompt)
 ```
 
-## 📊 JSON数据结构
+## 📊 数据结构说明
 
-### 核心结构
+### initializePlan 参数结构
+
+AI模型在调用`initializePlan`工具时，只需要提供以下简化的参数：
+
+```json
+{
+  "goal": "任务总目标描述",
+  "tasks": [
+    {
+      "name": "任务名称",
+      "reasoning": "执行这个任务的理由和目的", 
+      "dependencies": ["依赖的任务名称"] // 或者 [1, 2] 任务索引
+    }
+  ]
+}
+```
+
+**依赖关系表达方式：**
+- **任务名称**: `["打开网站", "登录账户"]` - 使用任务名称表达依赖
+- **任务索引**: `[1, 2]` - 使用1-based索引表达依赖  
+- **混合方式**: `["打开网站", 2]` - 可以混合使用
+
+### 内部JSON数据结构
+
+工具会自动生成完整的内部数据结构：
+
 ```json
 {
   "meta": {
@@ -289,12 +360,12 @@ print(prompt)
   },
   "tasks": [
     {
-      "id": 1,
-      "name": "任务名称",
-      "status": "in_progress",
-      "dependencies": [],
-      "reasoning": "执行理由", 
-      "result": null
+      "id": 1,                    // 工具自动分配
+      "name": "任务名称",          // 模型提供
+      "status": "in_progress",    // 工具自动维护
+      "dependencies": [2, 3],     // 工具自动转换为ID
+      "reasoning": "执行理由",     // 模型提供
+      "result": null              // 工具自动初始化
     }
   ]
 }

@@ -71,8 +71,17 @@ class PlanManager:
                 return False
         return True
     
-    def _detect_circular_dependency(self, task_id: int, dependencies: List[int]) -> bool:
+    def _detect_circular_dependency(self, task_id: int, dependencies: List[int], tasks_list: List[Dict] = None) -> bool:
         """检测循环依赖"""
+        # 使用提供的任务列表或者当前计划的任务列表
+        tasks_to_check = tasks_list if tasks_list is not None else self.plan_data["tasks"]
+        
+        def find_task_in_list(tid: int) -> Optional[Dict]:
+            for task in tasks_to_check:
+                if task["id"] == tid:
+                    return task
+            return None
+        
         def has_path(from_id: int, to_id: int, visited: set) -> bool:
             if from_id == to_id:
                 return True
@@ -80,7 +89,7 @@ class PlanManager:
                 return False
             
             visited.add(from_id)
-            task = self._find_task_by_id(from_id)
+            task = find_task_in_list(from_id)
             if task:
                 for dep_id in task["dependencies"]:
                     if has_path(dep_id, to_id, visited.copy()):
@@ -446,20 +455,111 @@ class PlanManager:
     
     # 工具函数
     
-    def initializePlan(self, goal: str, initial_tasks: List[Dict] = None) -> Dict:
-        """初始化计划"""
-        self.plan_data["meta"]["goal"] = goal
-        self.plan_data["meta"]["created_at"] = datetime.now().isoformat()
-        self.plan_data["tasks"] = initial_tasks or []
-        self.plan_data["state"]["status"] = "idle"
-        self.plan_data["state"]["current_task_id"] = None
+    def initializePlan(self, goal: str, tasks: List[Dict]) -> Dict:
+        """
+        初始化计划
         
+        AI模型只需要提供业务内容：
+        - goal: 计划目标
+        - tasks: 任务列表，每个任务包含：
+          - name: 任务名称
+          - reasoning: 执行理由
+          - dependencies: 依赖的任务（可以是任务名称列表或索引列表）
+        
+        工具自动维护：
+        - id: 从1开始自动分配
+        - status: 初始为"pending"
+        - result: 初始为None
+        - created_at/updated_at: 自动设置时间戳
+        """
+        if not tasks:
+            return self._error_response("INVALID_INPUT", "At least one task is required")
+        
+        current_time = datetime.now().isoformat()
+        
+        # 重置计划数据
+        self.plan_data = {
+            "meta": {
+                "goal": goal,
+                "created_at": current_time,
+                "updated_at": current_time
+            },
+            "state": {
+                "current_task_id": None,
+                "status": "idle"
+            },
+            "tasks": []
+        }
+        
+        # 处理任务列表
+        processed_tasks = []
+        task_name_to_id = {}  # 用于处理名称依赖
+        
+        # 第一遍：创建任务并建立名称映射
+        for i, task_input in enumerate(tasks):
+            if not isinstance(task_input, dict):
+                return self._error_response("INVALID_TASK_FORMAT", 
+                                          f"Task {i+1} must be a dictionary")
+            
+            if "name" not in task_input:
+                return self._error_response("MISSING_FIELD", 
+                                          f"Task {i+1} is missing required field 'name'")
+            
+            task_id = i + 1
+            task_name = task_input["name"]
+            task_name_to_id[task_name] = task_id
+            
+            processed_task = {
+                "id": task_id,
+                "name": task_name,
+                "status": "pending",
+                "dependencies": [],  # 先设为空，第二遍处理
+                "reasoning": task_input.get("reasoning", f"Execute task: {task_name}"),
+                "result": None
+            }
+            
+            processed_tasks.append(processed_task)
+        
+        # 第二遍：处理依赖关系
+        for i, task_input in enumerate(tasks):
+            dependencies = task_input.get("dependencies", [])
+            processed_dependencies = []
+            
+            for dep in dependencies:
+                if isinstance(dep, str):
+                    # 依赖是任务名称
+                    if dep in task_name_to_id:
+                        processed_dependencies.append(task_name_to_id[dep])
+                    else:
+                        return self._error_response("INVALID_DEPENDENCY", 
+                                                  f"Task '{processed_tasks[i]['name']}' depends on unknown task '{dep}'")
+                elif isinstance(dep, int):
+                    # 依赖是任务索引（1-based）
+                    if 1 <= dep <= len(tasks):
+                        processed_dependencies.append(dep)
+                    else:
+                        return self._error_response("INVALID_DEPENDENCY", 
+                                                  f"Task {i+1} has invalid dependency index {dep}")
+                else:
+                    return self._error_response("INVALID_DEPENDENCY_TYPE", 
+                                              f"Dependencies must be task names (strings) or indices (integers)")
+            
+            processed_tasks[i]["dependencies"] = processed_dependencies
+        
+        # 检测循环依赖
+        for task in processed_tasks:
+            if self._detect_circular_dependency(task["id"], task["dependencies"], processed_tasks):
+                return self._error_response("CIRCULAR_DEPENDENCY", 
+                                          f"Circular dependency detected involving task '{task['name']}'")
+        
+        self.plan_data["tasks"] = processed_tasks
         self._save_plan()
         
         return self._success_response({
             "message": "Plan initialized successfully",
             "goal": goal,
-            "task_count": len(self.plan_data["tasks"])
+            "task_count": len(processed_tasks),
+            "tasks": processed_tasks
         })
     
     def exportPlan(self) -> Dict:

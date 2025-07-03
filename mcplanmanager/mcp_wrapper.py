@@ -7,8 +7,8 @@ PlanManager工具包装器
 import json
 import sys
 from typing import Dict, Any
-from plan_manager import PlanManager
-from dependency_tools import DependencyVisualizer, DependencyPromptGenerator
+from .plan_manager import PlanManager
+from .dependency_tools import DependencyVisualizer, DependencyPromptGenerator
 
 class PlanManagerWrapper:
     """PlanManager工具包装器"""
@@ -52,7 +52,7 @@ class PlanManagerWrapper:
             elif tool_name == "getExecutableTaskList":
                 return pm.getExecutableTaskList()
             elif tool_name == "initializePlan":
-                return pm.initializePlan(arguments["goal"], arguments.get("initial_tasks"))
+                return pm.initializePlan(arguments["goal"], arguments["tasks"])
             elif tool_name == "visualizeDependencies":
                 format_type = arguments.get("format", "ascii")
                 visualizer = DependencyVisualizer(pm)

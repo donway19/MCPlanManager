@@ -4,7 +4,7 @@
 包括可视化和Prompt转换功能
 """
 
-from plan_manager import PlanManager
+from .plan_manager import PlanManager
 from typing import Dict, List, Any
 import json
 
