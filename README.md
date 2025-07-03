@@ -44,13 +44,12 @@ MCPlanManager/
 
 ## 🚀 安装方法
 
-### 方法一：通过pip安装 (推荐)
+### 从GitHub安装
 ```bash
-pip install mcplanmanager
-```
+# 方法一：直接从GitHub安装
+pip install git+https://github.com/donway19/MCPlanManager.git
 
-### 方法二：从源码安装
-```bash
+# 方法二：克隆仓库后安装
 git clone https://github.com/donway19/MCPlanManager.git
 cd MCPlanManager
 pip install -e .
@@ -65,7 +64,7 @@ pip install -e .
 # 使用uv包管理器（推荐）
 curl -LsSf https://astral.sh/uv/install.sh | sh
 uv venv ~/.mcpenv
-uv pip install --directory ~/.mcpenv mcplanmanager
+uv pip install --directory ~/.mcpenv git+https://github.com/donway19/MCPlanManager.git
 ```
 
 2. **配置Cursor**:
@@ -92,7 +91,7 @@ uv pip install --directory ~/.mcpenv mcplanmanager
 
 1. **安装依赖**:
 ```bash
-pip install mcplanmanager
+pip install git+https://github.com/donway19/MCPlanManager.git
 ```
 
 2. **配置Claude Desktop**:
@@ -121,7 +120,7 @@ pip install mcplanmanager
 
 1. **安装依赖**:
 ```bash
-pip install mcplanmanager
+pip install git+https://github.com/donway19/MCPlanManager.git
 ```
 
 2. **配置Continue**:
@@ -247,33 +246,29 @@ AI: 标记任务1为完成状态...
 ### 1. 基本使用
 
 ```python
-from plan_manager import PlanManager
+from mcplanmanager import PlanManager
 
 # 创建PlanManager实例
 pm = PlanManager("my_plan.json")
 
-# 初始化计划
+# 使用新的AI友好初始化方式
 goal = "完成网站自动化任务"
-initial_tasks = [
+tasks = [
     {
-        "id": 1,
         "name": "打开网站",
-        "status": "pending",
-        "dependencies": [],
         "reasoning": "第一步需要访问目标网站",
-        "result": None
+        "dependencies": []  # 无依赖
     },
     {
-        "id": 2, 
         "name": "登录账户",
-        "status": "pending",
-        "dependencies": [1],
         "reasoning": "需要先打开网站才能登录",
-        "result": None
+        "dependencies": ["打开网站"]  # 依赖任务名称
     }
 ]
 
-pm.initializePlan(goal, initial_tasks)
+# 工具会自动分配ID、设置状态等技术字段
+result = pm.initializePlan(goal, tasks)
+print(result)
 
 # 开始执行任务
 response = pm.startNextTask()
@@ -308,14 +303,16 @@ pm.skipTask(4, "此步骤不再需要")
 ### 3. 查看依赖关系
 
 ```python
-from dependency_tools import visualize_plan
+from mcplanmanager import DependencyVisualizer, DependencyPromptGenerator
 
 # 可视化依赖关系
-visualize_plan("my_plan.json")
+pm = PlanManager("my_plan.json")
+visualizer = DependencyVisualizer(pm)
+print(visualizer.generate_ascii_graph())
 
 # 生成上下文提示词
-from dependency_tools import generate_context_prompt
-prompt = generate_context_prompt("my_plan.json")
+generator = DependencyPromptGenerator(pm)
+prompt = generator.generate_context_prompt()
 print(prompt)
 ```
 
@@ -408,7 +405,7 @@ AI模型在调用`initializePlan`工具时，只需要提供以下简化的参�
 
 ### ASCII图形
 ```python
-from dependency_tools import DependencyVisualizer, PlanManager
+from mcplanmanager import PlanManager, DependencyVisualizer
 
 pm = PlanManager("plan.json")
 viz = DependencyVisualizer(pm)
@@ -440,7 +437,7 @@ print(viz.generate_mermaid_graph())
 
 ### 上下文提示词
 ```python
-from dependency_tools import DependencyPromptGenerator
+from mcplanmanager import PlanManager, DependencyPromptGenerator
 
 pm = PlanManager("plan.json")
 generator = DependencyPromptGenerator(pm)
