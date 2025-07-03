@@ -1,8 +1,8 @@
 {
   "mcpServers": {
-    "plan-manager": {
+    "mcplanmanager": {
       "command": "python",
-      "args": ["mcp_wrapper.py"],
+      "args": ["-m", "mcplanmanager.mcp_server"],
       "cwd": ".",
       "env": {
         "PYTHONPATH": "."

@@ -1,11 +1,11 @@
 {
   "mcpServers": {
-    "mcplanmanager": {
-      "command": "uv",
-      "args": ["--directory", "~/.mcpenv", "run", "mcplanmanager"],
-      "env": {
-        "UV_PROJECT_ENVIRONMENT": "~/.mcpenv"
-      }
+      "mcplanmanager": {
+        "command": "uv",
+        "args": ["--directory", "~/.mcpenv", "run", "mcplanmanager"],
+        "env": {
+          "UV_PROJECT_ENVIRONMENT": "~/.mcpenv"
+        }
     }
   }
 } 

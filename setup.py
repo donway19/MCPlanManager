@@ -42,8 +42,8 @@ setup(
     },
     entry_points={
         "console_scripts": [
-            "mcplanmanager=mcplanmanager.mcp_wrapper:main",
-            "mcplanmanager-api=server.api_server:main",
+            "mcplanmanager=mcplanmanager.mcp_server:main",
+            "mcplanmanager-wrapper=mcplanmanager.mcp_wrapper:main",
         ],
     },
     include_package_data=True,

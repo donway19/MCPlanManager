@@ -1,11 +1,10 @@
 include README.md
 include requirements.txt
-include mcp_config*.json
-include example_plan.json
-include example_usage.py
+include LICENSE
 include *.md
-recursive-include . *.py
-recursive-include . *.json
+recursive-include mcplanmanager *.py
+recursive-include examples *.json
+recursive-include docs *.md
 recursive-exclude . __pycache__
 recursive-exclude . *.pyc
 recursive-exclude . *.pyo
