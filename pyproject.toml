@@ -31,6 +31,7 @@ dependencies = [
     "fastapi>=0.104.0",
     "uvicorn>=0.24.0",
     "pydantic==2.10.6",
+    "fastmcp"
 ]
 
 [project.optional-dependencies]
@@ -45,8 +46,7 @@ Homepage = "https://github.com/donway19/MCPlanManager"
 Issues = "https://github.com/donway19/MCPlanManager/issues"
 
 [project.scripts]
-mcplanmanager = "mcplanmanager.mcp_server:main"
-mcplanmanager-wrapper = "mcplanmanager.mcp_wrapper:main"
+mcplanmanager = "mcplanmanager.app:main"
 
 [tool.setuptools.packages.find]
 where = ["."] 

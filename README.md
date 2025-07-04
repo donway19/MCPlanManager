@@ -15,13 +15,12 @@
 ## 📁 项目结构
 
 ```
-MCPlanManager/
+MCPlanManager-FastMCP/
 ├── mcplanmanager/           # 核心Python包
 │   ├── __init__.py
 │   ├── plan_manager.py      # 核心PlanManager类
 │   ├── dependency_tools.py  # 可视化和Prompt工具
-│   ├── mcp_wrapper.py       # MCP服务包装器
-│   └── mcp_server.py        # MCP服务器实现
+│   └── app.py               # FastMCP服务器实现
 ├── docs/                    # 文档
 │   ├── design.md
 │   ├── plan_manager_design.md
@@ -40,24 +39,32 @@ MCPlanManager/
 │       └── modelscope_deployment.json  # 魔搭平台配置
 ├── server/                  # HTTP服务器
 │   └── api_server.py
-├── setup.py                 # 安装配置
-├── requirements.txt         # 依赖文件
+├── pyproject.toml           # 项目配置和依赖
 ├── LICENSE                  # MIT许可证
 └── README.md               # 本文档
 ```
 
 ## 🚀 安装方法
 
-### 推荐方式：源码安装
+### 推荐方式：使用 uv 安装
 ```bash
+# 确保已安装 uv (如果未安装，请参考 uv 官方文档)
+# curl -LsSf https://astral.sh/uv/install.sh | sh
+
 # 克隆仓库
 git clone https://github.com/donway19/MCPlanManager.git
-cd MCPlanManager
-# 使用pip基于pyproject.toml安装
-pip install .
+cd MCPlanManager-FastMCP
+
+# 创建虚拟环境并安装依赖
+uv venv
+source .venv/bin/activate  # Linux/macOS
+# 或 .venv\Scripts\activate  # Windows
+
+# 安装项目
+uv pip install .
 ```
 
-### 直接从GitHub安装
+### 直接从GitHub安装 (不推荐，uv 方式更优)
 ```bash
 pip install git+https://github.com/donway19/MCPlanManager.git
 ```
@@ -98,7 +105,7 @@ uv pip install --directory ~/.mcpenv git+https://github.com/donway19/MCPlanManag
 
 1. **安装依赖**:
 ```bash
-pip install git+https://github.com/donway19/MCPlanManager.git
+uv pip install git+https://github.com/donway19/MCPlanManager.git
 ```
 
 2. **配置Claude Desktop**:
@@ -112,8 +119,8 @@ pip install git+https://github.com/donway19/MCPlanManager.git
 {
   "mcpServers": {
     "mcplanmanager": {
-      "command": "python",
-      "args": ["-m", "mcplanmanager.mcp_wrapper"],
+      "command": "uv",
+      "args": ["run", "mcplanmanager"],
       "env": {}
     }
   }
@@ -126,7 +133,7 @@ pip install git+https://github.com/donway19/MCPlanManager.git
 
 1. **安装依赖**:
 ```bash
-pip install git+https://github.com/donway19/MCPlanManager.git
+uv pip install git+https://github.com/donway19/MCPlanManager.git
 ```
 
 2. **配置Continue**:
@@ -138,8 +145,8 @@ pip install git+https://github.com/donway19/MCPlanManager.git
   "mcpServers": [
     {
       "name": "mcplanmanager",
-      "command": "python",
-      "args": ["-m", "mcplanmanager.mcp_wrapper"]
+      "command": "uv",
+      "args": ["run", "mcplanmanager"]
     }
   ]
 }
@@ -152,8 +159,8 @@ pip install git+https://github.com/donway19/MCPlanManager.git
 ```json
 {
   "name": "mcplanmanager",
-  "command": "python",
-  "args": ["-m", "mcplanmanager.mcp_server"],
+  "command": "uv",
+  "args": ["run", "mcplanmanager"],
   "env": {},
   "capabilities": {
     "tools": true,
@@ -183,7 +190,7 @@ pip install git+https://github.com/donway19/MCPlanManager.git
 
 ### 可视化和辅助
 - **`visualizeDependencies`** - 生成依赖关系可视化（ASCII、树形、Mermaid格式）
-- **`generateContextPrompt`** - 生成上下文感知的执行提示词
+- **`generateContextPrompt`** - 生成上下文提示词
 
 ## 💡 使用示例
 
@@ -266,7 +273,7 @@ AI: 好的，我来开始执行第一个任务。
 from mcplanmanager import PlanManager
 
 # 初始化计划管理器
-pm = PlanManager("my_plan.json")
+pm = PlanManager() # 移除文件路径参数
 
 # 创建任务计划
 tasks = [
@@ -308,13 +315,13 @@ MCPlanManager支持多种可视化格式：
 
 ```python
 # ASCII格式
-pm.visualizeDependencies("ascii")
+# pm.visualizeDependencies("ascii") # 移除直接调用，通过MCP工具调用
 
 # 树形格式
-pm.visualizeDependencies("tree")
+# pm.visualizeDependencies("tree") # 移除直接调用，通过MCP工具调用
 
 # Mermaid格式（可在支持的工具中渲染）
-pm.visualizeDependencies("mermaid")
+# pm.visualizeDependencies("mermaid") # 移除直接调用，通过MCP工具调用
 ```
 
 ## 📊 任务状态管理
@@ -341,15 +348,13 @@ MCPlanManager具有完整的错误处理机制：
 ```bash
 # 克隆仓库
 git clone https://github.com/donway19/MCPlanManager.git
-cd MCPlanManager
+cd MCPlanManager-FastMCP
 
-# 创建虚拟环境
-python -m venv venv
-source venv/bin/activate  # Linux/Mac
-# 或 venv\Scripts\activate  # Windows
-
-# 安装开发依赖
-pip install -e ".[dev]"
+# 创建虚拟环境并安装开发依赖
+uv venv
+source .venv/bin/activate  # Linux/macOS
+# 或 .venv\Scripts\activate  # Windows
+uv pip install -e ".[dev]"
 
 # 运行测试
 pytest tests/
@@ -358,11 +363,8 @@ pytest tests/
 ### 测试MCP服务器
 
 ```bash
-# 直接运行MCP服务器
-python -m mcplanmanager.mcp_server
-
-# 或使用包装器
-python -m mcplanmanager.mcp_wrapper getCurrentTask
+# 运行MCP服务器
+uv run mcplanmanager
 ```
 
 ## 📄 许可证

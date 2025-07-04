@@ -92,23 +92,7 @@ class PlanManager:
                 return True
         return False
     
-    def _success_response(self, data: Any, message: str = "") -> Dict:
-        """构造成功响应"""
-        return {
-            "success": True,
-            "data": data
-        }
     
-    def _error_response(self, code: str, message: str, details: Any = None) -> Dict:
-        """构造错误响应"""
-        return {
-            "success": False,
-            "error": {
-                "code": code,
-                "message": message,
-                "details": details or {}
-            }
-        }
     
     # 核心流程函数
     
@@ -116,13 +100,13 @@ class PlanManager:
         """获取当前正在执行的任务"""
         current_id = self.plan_data["state"]["current_task_id"]
         if current_id is None:
-            return self._error_response("NO_CURRENT_TASK", "No task is currently active")
+            raise ValueError("No task is currently active")
         
         task = self._find_task_by_id(current_id)
         if not task:
-            return self._error_response("TASK_NOT_FOUND", f"Current task {current_id} not found")
+            raise ValueError(f"Current task {current_id} not found")
         
-        return self._success_response(task)
+        return task
     
     def startNextTask(self) -> Dict:
         """自动开始下一个可执行的任务"""
@@ -134,7 +118,7 @@ class PlanManager:
                 executable_tasks.append(task)
         
         if not executable_tasks:
-            return self._error_response("NO_EXECUTABLE_TASK", "No executable tasks available")
+            raise ValueError("No executable tasks available")
         
         # 选择第一个可执行的任务
         next_task = executable_tasks[0]
@@ -144,19 +128,19 @@ class PlanManager:
         
         self._update_timestamp()
         
-        return self._success_response({
+        return {
             "task": next_task,
             "message": f"Started task {next_task['id']}: {next_task['name']}"
-        })
+        }
     
     def completeTask(self, task_id: int, result: str) -> Dict:
         """标记任务为完成状态"""
         task = self._find_task_by_id(task_id)
         if not task:
-            return self._error_response("TASK_NOT_FOUND", f"Task {task_id} not found")
+            raise ValueError(f"Task {task_id} not found")
         
         if task["status"] != "in_progress":
-            return self._error_response("INVALID_STATUS", f"Task {task_id} is not in progress")
+            raise ValueError(f"Task {task_id} is not in progress")
         
         task["status"] = "completed"
         task["result"] = result
@@ -175,16 +159,16 @@ class PlanManager:
         
         self._update_timestamp()
         
-        return self._success_response({
+        return {
             "task_id": task_id,
             "message": "Task completed successfully"
-        })
+        }
     
     def failTask(self, task_id: int, error_message: str, should_retry: bool = True) -> Dict:
         """标记任务失败"""
         task = self._find_task_by_id(task_id)
         if not task:
-            return self._error_response("TASK_NOT_FOUND", f"Task {task_id} not found")
+            raise ValueError(f"Task {task_id} not found")
         
         task["status"] = "failed"
         task["result"] = error_message
@@ -195,11 +179,11 @@ class PlanManager:
         
         self._update_timestamp()
         
-        return self._success_response({
+        return {
             "task_id": task_id,
             "will_retry": should_retry,
             "message": f"Task failed: {error_message}"
-        })
+        }
     
     # 任务管理函数
     
@@ -209,15 +193,13 @@ class PlanManager:
         # 验证依赖任务存在
         for dep_id in dependencies:
             if not self._find_task_by_id(dep_id):
-                return self._error_response("INVALID_DEPENDENCY", 
-                                          f"Dependency task {dep_id} not found")
+                raise ValueError(f"Dependency task {dep_id} not found")
         
         new_id = self._get_next_task_id()
         
         # 检测循环依赖
         if self._detect_circular_dependency(new_id, dependencies):
-            return self._error_response("CIRCULAR_DEPENDENCY", 
-                                      "Adding this task would create circular dependency")
+            raise ValueError("Adding this task would create circular dependency")
         
         new_task = {
             "id": new_id,
@@ -252,20 +234,19 @@ class PlanManager:
         
         self._update_timestamp()
         
-        return self._success_response({
+        return {
             "new_task": new_task,
             "message": "Task added successfully"
-        })
+        }
     
     def updateTask(self, task_id: int, updates: Dict) -> Dict:
         """更新任务信息"""
-        task = self._find_task_by_id(task_id)
+        task = self = self._find_task_by_id(task_id)
         if not task:
-            return self._error_response("TASK_NOT_FOUND", f"Task {task_id} not found")
+            raise ValueError(f"Task {task_id} not found")
         
         if task["status"] not in ["pending"]:
-            return self._error_response("TASK_NOT_EDITABLE", 
-                                      f"Task {task_id} cannot be edited in {task['status']} status")
+            raise ValueError(f"Task {task_id} cannot be edited in {task['status']} status")
         
         # 更新字段
         for key, value in updates.items():
@@ -275,28 +256,26 @@ class PlanManager:
                 # 验证新依赖
                 for dep_id in value:
                     if not self._find_task_by_id(dep_id):
-                        return self._error_response("INVALID_DEPENDENCY", 
-                                                  f"Dependency task {dep_id} not found")
+                        raise ValueError(f"Dependency task {dep_id} not found")
                 
                 # 检测循环依赖
                 if self._detect_circular_dependency(task_id, value):
-                    return self._error_response("CIRCULAR_DEPENDENCY", 
-                                              "Update would create circular dependency")
+                    raise ValueError("Update would create circular dependency")
                 
                 task["dependencies"] = value
         
         self._update_timestamp()
         
-        return self._success_response({
+        return {
             "updated_task": task,
             "message": "Task updated successfully"
-        })
+        }
     
     def skipTask(self, task_id: int, reason: str) -> Dict:
         """跳过指定任务"""
         task = self._find_task_by_id(task_id)
         if not task:
-            return self._error_response("TASK_NOT_FOUND", f"Task {task_id} not found")
+            raise ValueError(f"Task {task_id} not found")
         
         task["status"] = "skipped"
         task["result"] = reason
@@ -307,20 +286,19 @@ class PlanManager:
         
         self._update_timestamp()
         
-        return self._success_response({
+        return {
             "task_id": task_id,
             "message": f"Task skipped: {reason}"
-        })
+        }
     
     def removeTask(self, task_id: int) -> Dict:
         """删除任务（仅限pending状态）"""
         task = self._find_task_by_id(task_id)
         if not task:
-            return self._error_response("TASK_NOT_FOUND", f"Task {task_id} not found")
+            raise ValueError(f"Task {task_id} not found")
         
         if task["status"] != "pending":
-            return self._error_response("TASK_NOT_REMOVABLE", 
-                                      f"Only pending tasks can be removed")
+            raise ValueError(f"Only pending tasks can be removed")
         
         # 检查是否有其他任务依赖此任务
         dependent_tasks = []
@@ -329,18 +307,17 @@ class PlanManager:
                 dependent_tasks.append(t["id"])
         
         if dependent_tasks:
-            return self._error_response("TASK_HAS_DEPENDENTS", 
-                                      f"Task {task_id} has dependent tasks: {dependent_tasks}")
+            raise ValueError(f"Task {task_id} has dependent tasks: {dependent_tasks}")
         
         # 移除任务
         self.plan_data["tasks"] = [t for t in self.plan_data["tasks"] if t["id"] != task_id]
         
         self._update_timestamp()
         
-        return self._success_response({
+        return {
             "task_id": task_id,
             "message": "Task removed successfully"
-        })
+        }
     
     # 查询函数
     
@@ -353,11 +330,11 @@ class PlanManager:
         else:
             filtered_tasks = tasks
         
-        return self._success_response({
+        return {
             "tasks": filtered_tasks,
             "total": len(tasks),
             "filtered": len(filtered_tasks)
-        })
+        }
     
     def getPlanStatus(self) -> Dict:
         """获取完整的计划状态和数据"""
@@ -375,7 +352,7 @@ class PlanManager:
         progress = completed_count / total_tasks if total_tasks > 0 else 0.0
         
         # 返回完整的计划信息
-        return self._success_response({
+        return {
             # 基本信息
             "goal": self.plan_data["meta"]["goal"],
             "created_at": self.plan_data["meta"]["created_at"],
@@ -400,15 +377,15 @@ class PlanManager:
             
             # 完整的计划数据（供高级用户使用）
             "plan_data": deepcopy(self.plan_data)
-        })
+        }
     
     def getTaskById(self, task_id: int) -> Dict:
         """根据ID获取任务详情"""
         task = self._find_task_by_id(task_id)
         if not task:
-            return self._error_response("TASK_NOT_FOUND", f"Task {task_id} not found")
+            raise ValueError(f"Task {task_id} not found")
         
-        return self._success_response({"task": task})
+        return {"task": task}
     
     def getExecutableTaskList(self) -> Dict:
         """获取当前可执行的任务列表"""
@@ -418,10 +395,10 @@ class PlanManager:
                 self._check_dependencies_satisfied(task)):
                 executable_tasks.append(task)
         
-        return self._success_response({
+        return {
             "executable_tasks": executable_tasks,
             "count": len(executable_tasks)
-        })
+        }
     
     # 控制函数
     
@@ -430,9 +407,7 @@ class PlanManager:
         self.plan_data["state"]["status"] = "paused"
         self._update_timestamp()
         
-        return self._success_response({
-            "message": "Plan paused successfully"
-        })
+        return {"message": "Plan paused successfully"}
     
     def resumePlan(self) -> Dict:
         """恢复计划执行"""
@@ -440,12 +415,9 @@ class PlanManager:
             self.plan_data["state"]["status"] = "running"
             self._update_timestamp()
             
-            return self._success_response({
-                "message": "Plan resumed successfully"
-            })
+            return {"message": "Plan resumed successfully"}
         else:
-            return self._error_response("INVALID_STATUS", 
-                                      "Plan is not in paused status")
+            raise ValueError("Plan is not in paused status")
     
     def resetPlan(self) -> Dict:
         """重置计划（将所有任务状态重置为pending）"""
@@ -461,10 +433,10 @@ class PlanManager:
         
         self._update_timestamp()
         
-        return self._success_response({
+        return {
             "message": "Plan reset successfully",
             "reset_tasks": reset_count
-        })
+        }
     
     # 工具函数
     
@@ -486,7 +458,7 @@ class PlanManager:
         - created_at/updated_at: 自动设置时间戳
         """
         if not tasks:
-            return self._error_response("INVALID_INPUT", "At least one task is required")
+            raise ValueError("At least one task is required")
         
         current_time = datetime.now().isoformat()
         
@@ -511,12 +483,10 @@ class PlanManager:
         # 第一遍：创建任务并建立名称映射
         for i, task_input in enumerate(tasks):
             if not isinstance(task_input, dict):
-                return self._error_response("INVALID_TASK_FORMAT", 
-                                          f"Task {i+1} must be a dictionary")
+                raise ValueError(f"Task {i+1} must be a dictionary")
             
             if "name" not in task_input:
-                return self._error_response("MISSING_FIELD", 
-                                          f"Task {i+1} is missing required field 'name'")
+                raise ValueError(f"Task {i+1} is missing required field 'name'")
             
             task_id = i + 1
             task_name = task_input["name"]
@@ -544,40 +514,36 @@ class PlanManager:
                     if dep in task_name_to_id:
                         processed_dependencies.append(task_name_to_id[dep])
                     else:
-                        return self._error_response("INVALID_DEPENDENCY", 
-                                                  f"Task '{processed_tasks[i]['name']}' depends on unknown task '{dep}'")
+                        raise ValueError(f"Task '{processed_tasks[i]['name']}' depends on unknown task '{dep}'")
                 elif isinstance(dep, int):
                     # 依赖是任务索引（1-based）
                     if 1 <= dep <= len(tasks):
                         processed_dependencies.append(dep)
                     else:
-                        return self._error_response("INVALID_DEPENDENCY", 
-                                                  f"Task {i+1} has invalid dependency index {dep}")
+                        raise ValueError(f"Task {i+1} has invalid dependency index {dep}")
                 else:
-                    return self._error_response("INVALID_DEPENDENCY_TYPE", 
-                                              f"Dependencies must be task names (strings) or indices (integers)")
+                    raise ValueError(f"Dependencies must be task names (strings) or indices (integers)")
             
             processed_tasks[i]["dependencies"] = processed_dependencies
         
         # 检测循环依赖
         for task in processed_tasks:
             if self._detect_circular_dependency(task["id"], task["dependencies"], processed_tasks):
-                return self._error_response("CIRCULAR_DEPENDENCY", 
-                                          f"Circular dependency detected involving task '{task['name']}'")
+                raise ValueError(f"Circular dependency detected involving task '{task['name']}'")
         
         self.plan_data["tasks"] = processed_tasks
         self._update_timestamp()
         
-        return self._success_response({
+        return {
             "message": "Plan initialized successfully",
             "goal": goal,
             "task_count": len(processed_tasks),
             "tasks": processed_tasks
-        })
+        }
     
     def exportPlan(self) -> Dict:
         """导出计划数据"""
-        return self._success_response(deepcopy(self.plan_data))
+        return deepcopy(self.plan_data)
     
     def getDependencyGraph(self) -> Dict:
         """获取依赖关系图数据"""
@@ -597,7 +563,7 @@ class PlanManager:
                     "to": task["id"]
                 })
         
-        return self._success_response({
+        return {
             "nodes": nodes,
             "edges": edges
-        }) 
+        } 

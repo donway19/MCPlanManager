@@ -1,13 +1,11 @@
 {
   "mcpServers": {
     "mcplanmanager": {
-      "command": "python",
-      "args": ["start.py"],
+      "command": "uv",
+      "args": ["run", "mcplanmanager"],
       "cwd": ".",
       "description": "PlanManager AI Agent任务管理工具 - GitHub版本",
-      "env": {
-        "PYTHONPATH": "."
-      }
+      "env": {}
     }
   }
 }

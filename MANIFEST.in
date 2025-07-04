@@ -3,7 +3,6 @@ include requirements.txt
 include LICENSE
 include *.md
 recursive-include mcplanmanager *.py
-recursive-include examples *.json
 recursive-include docs *.md
 recursive-exclude . __pycache__
 recursive-exclude . *.pyc

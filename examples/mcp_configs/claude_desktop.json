@@ -1,11 +1,9 @@
 {
   "mcpServers": {
     "mcplanmanager": {
-      "command": "python",
-      "args": ["-m", "mcplanmanager.mcp_server"],
-      "env": {
-        "PLAN_MANAGER_DATA_DIR": "./data"
-      }
+      "command": "uv",
+      "args": ["run", "mcplanmanager"],
+      "env": {}
     }
   }
 } 
