@@ -1,8 +1,8 @@
 {
   "mcpServers": {
     "mcplanmanager": {
-      "command": "uv",
-      "args": ["run", "mcplanmanager"],
+      "command": "uvx",
+      "args": ["mcplanmanager"],
       "env": {}
     }
   }

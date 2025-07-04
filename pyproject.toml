@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mcplanmanager"
-version = "1.0.1"
+version = "1.0.3"
 authors = [
     { name = "Suhe", email = "donwaydoom@gmail.com" },
 ]
@@ -30,7 +30,7 @@ dependencies = [
     "typing_extensions>=4.5.0",
     "fastapi>=0.104.0",
     "uvicorn>=0.24.0",
-    "pydantic==2.10.6",
+    "pydantic>=2.11.7",
     "fastmcp"
 ]
 

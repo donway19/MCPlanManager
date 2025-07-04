@@ -45,3 +45,11 @@ Thumbs.db
 # Plan files for testing
 test_plan*.json
 temp_plan*.json
+
+# Ignored Markdown files
+todo.md
+docs/DEPLOYMENT_GUIDE.md
+GEMINI.md
+rule_temp.md
+docs/plan_manager_design.md
+docs/design.md
