@@ -2,7 +2,7 @@
   "mcpServers": {
     "mcplanmanager": {
       "command": "uvx",
-      "args": ["mcplanmanager"],
+      "args": ["mcplanmanager@latest"],
       "env": {}
     }
   }
