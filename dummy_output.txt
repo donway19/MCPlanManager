@@ -1,2 +1,0 @@
-Processed content: THIS IS SOME DUMMY INPUT DATA FOR GOLD PRICE ANALYSIS.
-This is a simulated analysis result for gold prices.
