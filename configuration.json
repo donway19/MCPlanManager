@@ -1,0 +1,21 @@
+{
+    "model": {
+        "model_name": "MCPlanManager-FastMCP",
+        "model_id": "mcplanmanager-agent",
+        "version": "1.0.1",
+        "description": "一个基于 FastMCP 的 AI Agent 任务管理系统，提供计划的创建、执行、监控和动态调整能力。",
+        "author": "Suhe",
+        "tags": ["agent", "mcp", "plan-manager", "tool-use"]
+    },
+    "framework": "python",
+    "task": "tool-communication",
+    "allow_remote_file": true,
+    "dependencies": {
+        "python": "3.10",
+        "requirements": ["requirements.txt"]
+    },
+    "run": {
+        "protocol": "mcp",
+        "command": "python3 -m mcplanmanager.app"
+    }
+} 
