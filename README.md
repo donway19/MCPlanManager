@@ -1,4 +1,5 @@
 # MCPlanManager - AI Agent 任务管理系统
+[![smithery badge](https://smithery.ai/badge/@donway19/mcplanmanager)](https://smithery.ai/server/@donway19/mcplanmanager)
 
 一个简洁高效的任务管理器，专为 AI Agent 的长程任务执行而设计，支持MCP (Model Context Protocol) 标准。
 
@@ -47,6 +48,15 @@ MCPlanManager-FastMCP/
 ## 🚀 安装方法
 
 ### 推荐方式：使用 uv 安装
+
+### 安装 via Smithery
+
+要在 Claude Desktop 上安装 MCPlanManager，请使用 [Smithery](https://smithery.ai/server/@donway19/mcplanmanager):
+
+```bash
+npx -y @smithery/cli install @donway19/mcplanmanager --client claude
+```
+
 ```bash
 # 确保已安装 uv (如果未安装，请参考 uv 官方文档)
 # curl -LsSf https://astral.sh/uv/install.sh | sh
