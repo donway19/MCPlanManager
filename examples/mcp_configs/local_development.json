@@ -1,8 +1,8 @@
 {
   "mcpServers": {
     "mcplanmanager": {
-      "command": "uv",
-      "args": ["run", "mcplanmanager"],
+      "command": "uvx",
+      "args": ["mcplanmanager"],
       "cwd": ".",
       "env": {},
       "description": "PlanManager AI Agent任务管理工具 - 本地开发版本"
