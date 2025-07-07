@@ -1,26 +1,18 @@
 # Use an official Python runtime as a parent image, from a CN mirror
-FROM docker.m.daocloud.io/library/python:3.12-slim
+FROM python:3.11-slim
 
 # Set the working directory in the container
 WORKDIR /app
 
-# Copy the project files needed for installation
-COPY pyproject.toml MANIFEST.in README.md LICENSE ./
+# Copy the pre-built wheel from the dist directory
+COPY dist/*.whl ./
 
-# Copy the main application directory
-COPY mcplanmanager ./mcplanmanager
+# Install the wheel package. The wildcard will be expanded by the shell.
+# This approach is faster and avoids including build dependencies in the final image.
+RUN pip install --no-cache-dir -i https://mirrors.aliyun.com/pypi/simple/ ./*.whl
 
-# Install any needed packages specified in pyproject.toml
-# This will install the project and its dependencies, including fastmcp
-# and create the `mcplanmanager` command-line script.
-RUN pip install --no-cache-dir -i https://pypi.tuna.tsinghua.edu.cn/simple .
+# Make port 6276 available, as specified in docker-compose.yml
+EXPOSE 6276
 
-# Copy the rest of the application
-COPY . .
-
-# Make port 8000 available to the world outside this container
-# This is for the FastAPI server, although the default command runs SSE
-EXPOSE 8000
-
-# Run the MCP in SSE mode by default
-CMD ["mcplanmanager"]
+# Set a default command, although it will be overridden by docker-compose.yml
+CMD ["uvicorn", "mcplanmanager.app:mcp", "--host", "0.0.0.0", "--port", "6276"]

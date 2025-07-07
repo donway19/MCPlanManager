@@ -1,6 +1,5 @@
 include README.md
 include LICENSE
-recursive-include mcplanmanager *.py
 recursive-exclude . __pycache__
 recursive-exclude . *.pyc
 recursive-exclude . *.pyo

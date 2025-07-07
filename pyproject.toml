@@ -4,22 +4,20 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "mcplanmanager"
-version = "1.0.3"
+version = "1.1.0"
 authors = [
     { name = "Suhe", email = "donwaydoom@gmail.com" },
 ]
 description = "AI Agent任务管理系统 - MCP服务"
 readme = "README.md"
 license = { text = "MIT License" }
-requires-python = ">=3.8"
+requires-python = ">=3.10"
 classifiers = [
     "Development Status :: 4 - Beta",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Topic :: Software Development :: Libraries :: Python Modules",
@@ -30,7 +28,7 @@ dependencies = [
     "typing_extensions>=4.5.0",
     "fastapi>=0.104.0",
     "uvicorn>=0.24.0",
-    "pydantic>=2.11.7",
+    "pydantic==2.10.4",
     "fastmcp"
 ]
 
@@ -49,4 +47,4 @@ Issues = "https://github.com/donway19/MCPlanManager/issues"
 mcplanmanager = "mcplanmanager.app:main"
 
 [tool.setuptools.packages.find]
-where = ["."] 
+where = ["src"] 
