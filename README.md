@@ -1,17 +1,14 @@
 # MCPlanManager - AI Agent 任务管理系统
 
 [![PyPI version](https://img.shields.io/pypi/v/mcplanmanager.svg)](https://pypi.org/project/mcplanmanager/)
-[![Docker Image Version](https://img.shields.io/docker/v/donway19/mcplanmanager/latest?label=docker)](https://hub.docker.com/r/donway19/mcplanmanager)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 一个简洁高效的任务管理器，专为 AI Agent 的长程任务执行而设计，支持MCP (Model Context Protocol) 标准，并同时支持 `uvx` 和 `Docker` 两种部署方式。
 
-**版本 1.1.0 更新亮点:**
-- 采用 `src` 目录结构，项目结构更清晰。
-- **全面转向 SSE 传输模式**，优化了 Docker 部署的性能和实时性。
-- **增加了完整的测试套件** (`test/`)，覆盖所有工具的功能和边界情况。
-- 修复了 `editDependencies` 工具的参数 Bug 和 `generateContextPrompt` 的数据结构错误。
-- 优化了所有工具的 Prompt 说明，提供了更清晰的用法和示例。
+**版本 1.2.0 更新亮点:**
+- **新增计划持久化工具**：引入 `dumpPlan` 和 `loadPlan` 工具，允许对任务计划进行完整的导出和恢复。
+- **优化工具文档**：为使用 Pydantic 模型的工具（如 `initializePlan`, `editDependencies`）补充了参数结构描述，以改善部分客户端的兼容性。
+- **增强测试套件**：添加了针对持久化功能的完整测试用例，并优化了测试运行流程。
 
 ## 🚀 部署与使用
 
@@ -109,9 +106,11 @@ Docker 提供了最佳的环境一致性和隔离性，是生产环境部署的�
 
 ## 🛠️ MCP 工具列表
 
-本项目提供以下13个工具：
+本项目提供以下15个工具：
 
 *   **`initializePlan`**: 初始化新的任务计划
+*   **`loadPlan`**: 从一个完整的计划对象加载并替换当前计划
+*   **`dumpPlan`**: 导出当前完整的计划数据为一个字典对象
 *   **`getCurrentTask`**: 获取当前正在执行的任务
 *   **`startNextTask`**: 开始下一个可执行的任务
 *   **`completeTask`**: 标记任务为完成状态
