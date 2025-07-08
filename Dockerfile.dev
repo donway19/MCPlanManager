@@ -1,0 +1,19 @@
+# Use an official Python runtime as a parent image
+FROM python:3.11-slim
+
+# Set the working directory
+WORKDIR /usr/src/app
+
+# Copy project configuration and source code
+COPY pyproject.toml ./
+COPY src ./src
+
+# Install the project in editable mode using standard pip
+# This is a reliable and standard way to set up a development environment
+RUN pip install --no-cache-dir -e .
+
+# Expose the port the app runs on
+EXPOSE 8080
+
+# The command to run the application will be specified in docker-compose.dev.yml
+CMD ["mcplanmanager"] 

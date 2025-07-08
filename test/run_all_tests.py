@@ -61,36 +61,43 @@ class TestRunner:
             }
     
     def check_docker_service(self):
-        """检查Docker服务是否运行"""
+        """检查并重启Docker开发服务以确保加载最新代码"""
         if self.mode == "sse":
-            print("🔍 检查Docker服务状态...")
+            print("🔄 准备重启Docker开发服务以加载最新代码...")
+            dev_compose_file = "docker-compose.dev.yml"
+            prod_compose_file = "docker-compose.yml"
+            
             try:
-                result = subprocess.run([
-                    "docker", "ps", "--filter", "name=mcplanmanager", "--format", "table {{.Names}}\t{{.Status}}"
-                ], capture_output=True, text=True)
+                # 1. 停止并移除可能存在的旧容器（开发版和生产版）
+                print("  - 停止所有相关容器...")
+                subprocess.run(
+                    ["docker-compose", "-f", dev_compose_file, "down", "--remove-orphans"],
+                    capture_output=True, text=True, cwd=self.test_dir.parent
+                )
+                subprocess.run(
+                    ["docker-compose", "-f", prod_compose_file, "down", "--remove-orphans"],
+                    capture_output=True, text=True, cwd=self.test_dir.parent
+                )
+
+                # 2. 启动新的开发容器，强制重新构建
+                print("  - 启动新的开发容器并强制重新构建...")
+                start_result = subprocess.run(
+                    ["docker-compose", "-f", dev_compose_file, "up", "--build", "-d"],
+                    capture_output=True, text=True, cwd=self.test_dir.parent
+                )
                 
-                if result.returncode == 0 and "mcplanmanager" in result.stdout:
-                    print("✅ Docker服务正在运行")
+                if start_result.returncode == 0:
+                    print("✅ Docker 服务已成功启动最新版本")
+                    # 等待几秒钟以确保服务完全启动
+                    import time
+                    time.sleep(5)
                     return True
                 else:
-                    print("⚠️ Docker服务未运行，尝试启动...")
-                    # 尝试启动Docker服务
-                    start_result = subprocess.run([
-                        "docker-compose", "up", "-d"
-                    ], capture_output=True, text=True, cwd=self.test_dir.parent)
-                    
-                    if start_result.returncode == 0:
-                        print("✅ Docker服务启动成功")
-                        # 等待服务启动
-                        import time
-                        time.sleep(5)
-                        return True
-                    else:
-                        print(f"❌ Docker服务启动失败: {start_result.stderr}")
-                        return False
+                    print(f"❌ Docker 服务启动失败: {start_result.stderr}")
+                    return False
                         
             except Exception as e:
-                print(f"❌ 检查Docker服务时出错: {e}")
+                print(f"❌ 操作Docker服务时出错: {e}")
                 return False
         return True
     
@@ -108,6 +115,7 @@ class TestRunner:
         test_suites = [
             ("test_complete_suite.py", "完整功能测试"),
             ("test_edge_cases.py", "边界情况测试"),
+            ("test_persistence.py", "持久化功能测试"),
         ]
         
         # 运行每个测试套件

@@ -94,6 +94,26 @@ class PlanManager:
     
     
     
+    def loadPlan(self, plan_data: Dict) -> Dict:
+        """
+        直接加载一个完整的计划对象，替换现有计划。
+
+        Args:
+            plan_data (Dict): 符合PlanManager内部数据结构的完整计划字典。
+
+        Returns:
+            Dict: 操作结果。
+        """
+        # (可选) 在这里可以添加对 plan_data 结构的验证
+        # 例如，检查 'meta', 'state', 'tasks' 等关键字段是否存在
+        if not all(k in plan_data for k in ["meta", "state", "tasks"]):
+            return {"success": False, "message": "Invalid plan structure provided."}
+        
+        self.plan_data = deepcopy(plan_data)
+        self._update_timestamp()
+        
+        return {"success": True, "message": "Plan loaded successfully."}
+    
     # 核心流程函数
     
     def getCurrentTask(self) -> Dict:
@@ -577,13 +597,17 @@ class PlanManager:
 
     def _check_all_circular_dependencies(self, processed_tasks: List[Dict]):
         for task in processed_tasks:
-            if self._detect_circular_dependency(task["id"], task["dependencies"], processed_tasks):
-                raise ValueError(f"Circular dependency detected involving task '{task['name']}'")
-    
-    def exportPlan(self) -> Dict:
-        """导出计划数据"""
-        return deepcopy(self.plan_data)
-    
+            if self._detect_circular_dependency(task["id"], task["dependencies"], tasks_list=processed_tasks):
+                raise ValueError(f"Circular dependency detected for task {task['id']}")
+
+    def dumpPlan(self) -> Dict:
+        """导出完整的计划数据为一个字典对象。"""
+        return {
+            "success": True,
+            "data": deepcopy(self.plan_data),
+            "message": "Plan dumped successfully."
+        }
+
     def getDependencyGraph(self) -> Dict:
         """获取依赖关系图数据"""
         nodes = []

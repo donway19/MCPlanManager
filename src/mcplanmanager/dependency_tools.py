@@ -184,7 +184,11 @@ class DependencyPromptGenerator:
         if not plan_status["success"]:
             return "Error: Could not get plan status"
         
-        plan_data = self.pm.exportPlan()  # exportPlan() 直接返回计划数据，不需要["data"]
+        dump_result = self.pm.dumpPlan()
+        if not dump_result.get("success"):
+            return "Error: Could not dump plan data"
+        plan_data = dump_result["data"]
+        
         goal = plan_data["meta"]["goal"]
         tasks = plan_data["tasks"]
         state = plan_data["state"]

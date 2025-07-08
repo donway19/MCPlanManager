@@ -1,5 +1,5 @@
 from fastmcp import FastMCP
-from typing import List, Optional
+from typing import List, Optional, Union
 from .plan_manager import PlanManager
 from .models import TaskInput, DependencyEdit, TaskOutput, ToolResponse, PlanStatusData
 import os
@@ -15,10 +15,36 @@ def initializePlan(goal: str, tasks: List[TaskInput]) -> ToolResponse[dict]:
 
     Args:
         goal (str): 描述计划总体目标的字符串。
-        tasks (List[TaskInput]): 任务对象的列表。每个任务都应符合TaskInput模型定义的结构。
+        tasks (List[TaskInput]): 任务对象的列表。每个任务的结构如下:
+          - name (str): 任务的名称，在一个计划中应唯一。
+          - dependencies (List[Union[str, int]]): 依赖的任务名称或ID列表。
+          - reasoning (str): 阐述为何需要此任务。
     """
     task_dicts = [task.model_dump() for task in tasks]
     return plan_manager.initializePlan(goal, task_dicts)
+
+@mcp.tool()
+def loadPlan(plan_data: dict) -> ToolResponse:
+    """
+    通过一个完整的计划对象加载或替换当前计划。
+    这个工具会直接覆盖内存中的整个计划，请谨慎使用。
+
+    Args:
+        plan_data (dict): 一个包含完整计划数据的字典对象，通常由 dumpPlan 工具导出。
+                          它应包含 'meta', 'state', 和 'tasks' 三个顶级键。
+    """
+    return plan_manager.loadPlan(plan_data)
+
+@mcp.tool()
+def dumpPlan() -> ToolResponse[dict]:
+    """
+    导出当前完整的计划数据为一个字典对象。
+    这个导出的对象可以被 loadPlan 工具用来恢复状态。
+
+    Returns:
+        ToolResponse[dict]: 包含当前完整计划数据的响应对象。
+    """
+    return plan_manager.dumpPlan()
 
 @mcp.tool()
 def visualizeDependencies(format: str = "ascii") -> str:
@@ -127,7 +153,12 @@ def editDependencies(edits: List[DependencyEdit]) -> ToolResponse[dict]:
     如果任何指令失败，整个操作将回滚。
 
     Args:
-        edits (List[DependencyEdit]): 一个包含编辑指令对象的列表，每个对象都应符合 DependencyEdit 模型。
+        edits (List[DependencyEdit]): 一个包含编辑指令对象的列表，每个对象的结构如下:
+          - task_id (int): 要修改的任务ID。
+          - action (Literal["set", "update"]): 要执行的操作。
+          - dependencies (Optional[List[int]]): 当 action 为 'set' 时，提供新的完整依赖ID列表。
+          - add (Optional[List[int]]): 当 action 为 'update' 时，提供要添加的依赖ID列表。
+          - remove (Optional[List[int]]): 当 action 为 'update' 时，提供要移除的依赖ID列表。
     """
     edit_dicts = [edit.model_dump(exclude_none=True) for edit in edits]
     return plan_manager.edit_dependencies_in_batch(edit_dicts)
