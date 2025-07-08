@@ -48,3 +48,4 @@ uv.lock
 
 # local dev file
 docker-compose.dev.yml
+Dockerfile.dev
